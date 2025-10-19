@@ -2,8 +2,7 @@
     "name": "@repo/shared",
     "type": "module",
     "scripts": {
-        "dev": "tsc --watch",
-        "build": "tsc"
+        "dev": "tsc --watch"
     },
     "exports": {},
     "devDependencies": {
