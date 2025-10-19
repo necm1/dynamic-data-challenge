@@ -1,5 +1,5 @@
 {
-    "name": "@repo/shared",
+    "name": "@repo/api-utils",
     "version": "0.0.0",
     "type": "commonjs",
     "private": true,

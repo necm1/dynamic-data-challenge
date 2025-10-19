@@ -1,0 +1,15 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class AddGinIndex1760889587706 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_entity_metadata_fields_gin ON entity_metadata USING GIN (fields);`,
+    );
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_entity_metadata_fields_gin;`,
+    );
+  }
+}
