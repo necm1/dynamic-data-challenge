@@ -25,7 +25,7 @@
   ],
   "references": [
     {
-      "path": "../../packages/orm/tsconfig.build.json"
+      "path": "../../packages/api-orm/tsconfig.build.json"
     }
   ]
 }

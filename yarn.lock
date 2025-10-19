@@ -3157,6 +3157,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@repo/api-orm@npm:*, @repo/api-orm@workspace:packages/api-orm":
+  version: 0.0.0-use.local
+  resolution: "@repo/api-orm@workspace:packages/api-orm"
+  dependencies:
+    "@nestjs/common": "npm:^11.1.6"
+    "@nestjs/config": "npm:^4.0.2"
+    "@nestjs/typeorm": "npm:^11.0.0"
+    "@repo/shared": "npm:*"
+    "@repo/typescript-config": "npm:*"
+    "@types/pg": "npm:^8"
+    class-transformer: "npm:^0.5.1"
+    class-validator: "npm:^0.14.2"
+    ioredis: "npm:^5.8.1"
+    pg: "npm:^8.16.3"
+    typeorm: "npm:^0.3.27"
+    typescript: "npm:latest"
+  languageName: unknown
+  linkType: soft
+
 "@repo/eslint-config@npm:*, @repo/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@repo/eslint-config@workspace:packages/eslint-config"
@@ -3176,25 +3195,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@repo/orm@npm:*, @repo/orm@workspace:packages/orm":
-  version: 0.0.0-use.local
-  resolution: "@repo/orm@workspace:packages/orm"
-  dependencies:
-    "@nestjs/common": "npm:^11.1.6"
-    "@nestjs/config": "npm:^4.0.2"
-    "@nestjs/typeorm": "npm:^11.0.0"
-    "@repo/typescript-config": "npm:*"
-    "@types/pg": "npm:^8"
-    class-transformer: "npm:^0.5.1"
-    class-validator: "npm:^0.14.2"
-    ioredis: "npm:^5.8.1"
-    pg: "npm:^8.16.3"
-    typeorm: "npm:^0.3.27"
-    typescript: "npm:latest"
-  languageName: unknown
-  linkType: soft
-
-"@repo/shared@workspace:packages/shared":
+"@repo/shared@npm:*, @repo/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:packages/shared"
   dependencies:
@@ -3865,7 +3866,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:^24.8.1":
   version: 24.8.1
   resolution: "@types/node@npm:24.8.1"
   dependencies:
@@ -4719,7 +4720,8 @@ __metadata:
     "@nestjs/platform-express": "npm:^11.0.1"
     "@nestjs/schematics": "npm:^11.0.0"
     "@nestjs/testing": "npm:^11.0.1"
-    "@repo/orm": "npm:*"
+    "@repo/api-orm": "npm:*"
+    "@repo/shared": "npm:*"
     "@types/express": "npm:^5.0.0"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^22.10.7"
@@ -6246,8 +6248,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "dynamic-data-challenge@workspace:."
   dependencies:
+    "@types/node": "npm:^24.8.1"
     prettier: "npm:^3.6.0"
     prettier-plugin-tailwindcss: "npm:^0.6.11"
+    tsconfig-paths: "npm:^4.2.0"
     turbo: "npm:^2.5.8"
   languageName: unknown
   linkType: soft
