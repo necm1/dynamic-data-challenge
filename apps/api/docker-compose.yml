@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - database:/var/lib/postgresql/data
+    expose:
+      - '${DATABASE_PORT}'
+    ports:
+      - '${DATABASE_PORT}:5432'
+    networks:
+      - local
+  cache:
+    image: 'bitnami/redis:latest'
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: no
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - cache:/var/lib/redis
+    expose:
+      - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      local:
+
+volumes:
+  database:
+    driver: local
+  cache:
+    driver: local
+
+networks:
+  local:
+    driver: bridge
