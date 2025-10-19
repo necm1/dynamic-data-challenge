@@ -1,0 +1,13 @@
+{
+    "name": "@repo/orm",
+    "type": "module",
+    "scripts": {
+        "dev": "tsc --watch",
+        "build": "tsc"
+    },
+    "exports": {},
+    "devDependencies": {
+        "@repo/typescript-config": "*",
+        "typescript": "latest"
+    }
+}
