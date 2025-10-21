@@ -36,7 +36,10 @@ import {
   createProperty,
   updateProperty,
 } from '@repo/web-utils/actions/properties';
-import type { MetadataSchema } from '@repo/web-utils/actions/metadata';
+import type {
+  MetadataSchema,
+  SelectValidationRules,
+} from '@repo/web-utils/actions/metadata';
 import { Loader2, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -82,10 +85,11 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
           fieldSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
           break;
         case 'SELECT':
-          const options = schema.validation_rules?.options as
-            | string[]
+          const select = schema.validation_rules as
+            | SelectValidationRules
             | undefined;
-          const isMultiple = schema.validation_rules?.multiple === true;
+          const options = select?.options;
+          const isMultiple = select?.multiple === true;
 
           if (isMultiple) {
             fieldSchema = z.array(z.enum(options as [string, ...string[]]));
@@ -101,7 +105,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
           break;
       }
 
-      if (!schema.is_required) {
+      if (!schema.validation_rules?.required) {
         fieldSchema = fieldSchema.optional();
       }
 
@@ -162,7 +166,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -202,7 +206,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
                 <div className="space-y-1 leading-none">
                   <FormLabel>
                     {schema.field_label}
-                    {schema.is_required && (
+                    {schema.validation_rules?.required && (
                       <span className="text-destructive ml-1">*</span>
                     )}
                   </FormLabel>
@@ -218,10 +222,11 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
         );
 
       case 'SELECT':
-        const options = schema.validation_rules?.options as
-          | string[]
+        const select = schema.validation_rules as
+          | SelectValidationRules
           | undefined;
-        const isMultiple = schema.validation_rules?.multiple === true;
+        const options = select?.options as string[] | undefined;
+        const isMultiple = select?.multiple === true;
 
         if (isMultiple) {
           return (
@@ -233,7 +238,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
                 <FormItem>
                   <FormLabel>
                     {schema.field_label}
-                    {schema.is_required && (
+                    {schema.validation_rules?.required && (
                       <span className="text-destructive ml-1">*</span>
                     )}
                   </FormLabel>
@@ -281,7 +286,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -317,7 +322,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -340,7 +345,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -369,7 +374,7 @@ export function PropertyForm({ property, schemas }: PropertyFormProps) {
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>

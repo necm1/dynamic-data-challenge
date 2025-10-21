@@ -13,7 +13,10 @@ import {
 } from '@repo/ui/components/drawer';
 import { Separator } from '@repo/ui/components/separator';
 import { useIsMobile } from '@repo/ui/hooks/use-mobile';
-import { MetadataSchema } from '@repo/web-utils/actions/metadata';
+import {
+  MetadataSchema,
+  SelectValidationRules,
+} from '@repo/web-utils/actions/metadata';
 import { Property } from '@repo/web-utils/lib/schemas/property.schema';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
@@ -89,10 +92,11 @@ export function PropertyView({
           fieldSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
           break;
         case 'SELECT':
-          const options = schema.validation_rules?.options as
-            | string[]
+          const select = schema.validation_rules as
+            | SelectValidationRules
             | undefined;
-          const isMultiple = schema.validation_rules?.multiple === true;
+          const options = select?.options;
+          const isMultiple = select?.multiple === true;
 
           if (isMultiple) {
             fieldSchema = z.array(z.enum(options as [string, ...string[]]));
@@ -108,7 +112,7 @@ export function PropertyView({
           break;
       }
 
-      if (!schema.is_required) {
+      if (!schema.validation_rules?.required) {
         fieldSchema = fieldSchema.optional();
       }
 
@@ -169,7 +173,7 @@ export function PropertyView({
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -209,7 +213,7 @@ export function PropertyView({
                 <div className="space-y-1 leading-none">
                   <FormLabel>
                     {schema.field_label}
-                    {schema.is_required && (
+                    {schema.validation_rules?.required && (
                       <span className="text-destructive ml-1">*</span>
                     )}
                   </FormLabel>
@@ -225,10 +229,11 @@ export function PropertyView({
         );
 
       case 'SELECT':
-        const options = schema.validation_rules?.options as
-          | string[]
+        const select = schema.validation_rules as
+          | SelectValidationRules
           | undefined;
-        const isMultiple = schema.validation_rules?.multiple === true;
+        const options = select?.options as string[] | undefined;
+        const isMultiple = select?.multiple === true;
 
         if (isMultiple) {
           return (
@@ -240,7 +245,7 @@ export function PropertyView({
                 <FormItem>
                   <FormLabel>
                     {schema.field_label}
-                    {schema.is_required && (
+                    {schema.validation_rules?.required && (
                       <span className="text-destructive ml-1">*</span>
                     )}
                   </FormLabel>
@@ -288,7 +293,7 @@ export function PropertyView({
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -324,7 +329,7 @@ export function PropertyView({
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -347,7 +352,7 @@ export function PropertyView({
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
@@ -376,7 +381,7 @@ export function PropertyView({
               <FormItem>
                 <FormLabel>
                   {schema.field_label}
-                  {schema.is_required && (
+                  {schema.validation_rules?.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </FormLabel>
