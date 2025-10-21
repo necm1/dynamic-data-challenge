@@ -29,7 +29,7 @@ interface FindPaginatedOptions<T> extends CacheOptions {
 }
 
 export class BaseRepository<T extends ObjectLiteral> extends Repository<T> {
-  @Inject(CACHE_MANAGER) private cacheManager: Cache;
+  @Inject(CACHE_MANAGER) public cacheManager: Cache;
 
   public override async find({
     isCached = true,
