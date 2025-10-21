@@ -10,7 +10,7 @@ import {
 @Entity({ name: 'properties' })
 export class Property {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
   @Index()
   @Column({ type: 'varchar', length: 160 })
