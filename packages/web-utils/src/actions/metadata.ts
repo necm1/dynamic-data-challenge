@@ -1,6 +1,35 @@
 'use server';
 
+import { EntityType } from '@repo/shared';
 import { API_URL } from '../constants';
+import { PaginatedResponse } from '../types/paginated-response';
+
+export type BaseValidationRules = {
+  required: boolean;
+  description?: string;
+};
+
+export type NumberValidationRules = BaseValidationRules & {
+  min?: number;
+  max?: number;
+};
+
+export type SelectValidationRules = BaseValidationRules & {
+  options: string[];
+  multiple?: boolean;
+};
+
+export type StringValidationRules = BaseValidationRules & {
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+};
+
+export type ValidationRules =
+  | NumberValidationRules
+  | SelectValidationRules
+  | StringValidationRules
+  | BaseValidationRules;
 
 export type MetadataSchema = {
   id: string;
@@ -8,27 +37,15 @@ export type MetadataSchema = {
   field_key: string;
   field_label: string;
   field_type: 'STRING' | 'NUMBER' | 'BOOLEAN' | 'DATE' | 'SELECT' | 'TEXT';
-  is_required: boolean;
   is_active: boolean;
-  validation_rules?: Record<string, any>;
+  validation_rules?: ValidationRules;
   display_order: number;
   created_at: string;
   updated_at: string;
 };
 
-export type PaginatedResponse<T> = {
-  status: number;
-  data: T[];
-  meta?: {
-    total: number;
-    page: number;
-    perPage: number;
-    totalPages: number;
-  };
-};
-
 export async function getMetadataSchemas(
-  entityType: number,
+  entityType: (typeof EntityType)[keyof typeof EntityType],
 ): Promise<PaginatedResponse<MetadataSchema>> {
   try {
     const response = await fetch(`${API_URL}/metadata/schema/${entityType}`, {
@@ -43,7 +60,7 @@ export async function getMetadataSchemas(
 
     const data = await response.json();
 
-    return data
+    return data;
   } catch (error) {
     console.error('Failed to fetch metadata schemas:', error);
     throw error;
@@ -55,8 +72,7 @@ export async function createMetadataSchema(dto: {
   field_key: string;
   field_label: string;
   field_type: string;
-  is_required?: boolean;
-  validation_rules?: Record<string, any>;
+  validation_rules?: ValidationRules;
   display_order?: number;
 }): Promise<MetadataSchema> {
   const response = await fetch(`${API_URL}/metadata/schema`, {
@@ -104,4 +120,36 @@ export async function deleteMetadataSchema(id: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to delete metadata schema');
   }
+}
+
+export async function getMetadataSchemasPaginated(params: {
+  entity_type: EntityType;
+  field_key?: string;
+  field_label?: string;
+  field_type?: string;
+  page?: number;
+  perPage?: number;
+}): Promise<PaginatedResponse<MetadataSchema>> {
+  const queryParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, String(value));
+    }
+  });
+
+  const response = await fetch(
+    `${API_URL}/metadata?${queryParams.toString()}`,
+    {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch metadata schemas');
+  }
+
+  return response.json();
 }
