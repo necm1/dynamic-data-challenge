@@ -28,7 +28,7 @@ import * as bodyParser from 'body-parser';
   );
   app.use(bodyParser.urlencoded({ limit: 1e8 + 'mb', extended: true }));
 
-  const port = process.env.PORT ?? 3001;
+  const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
   NestLogger.log(`API is running on: http://localhost:${port}/${globalPrefix}`);
