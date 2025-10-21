@@ -19,6 +19,11 @@
     },
     "devDependencies": {
         "@repo/typescript-config": "*",
+        "@types/cache-manager": "4.0.1",
         "typescript": "latest"
+    },
+    "dependencies": {
+        "cache-manager": "5.7.5",
+        "cache-manager-redis-yet": "5.1.3"
     }
 }

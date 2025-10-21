@@ -11,6 +11,7 @@ import {
   ObjectLiteral,
   Repository,
   SaveOptions,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
 import { Pagination } from './pagination.interface';
@@ -144,6 +145,94 @@ export class BaseRepository<T extends ObjectLiteral> extends Repository<T> {
     };
 
     return pagination;
+  }
+
+  public async paginateQueryBuilder(
+    qb: SelectQueryBuilder<T>,
+    options: FindPaginatedOptions<T>,
+  ): Promise<Pagination<T>> {
+    const {
+      perPage = 10,
+      page = 1,
+      isCached = true,
+      ttl = 3600 * 1000,
+    } = options;
+
+    qb.skip((page - 1) * perPage).take(perPage);
+
+    let items: T[];
+    let total: number;
+
+    if (isCached) {
+      const cacheKey = `qb:${qb.getQueryAndParameters()[0]}:p${page}:pp${perPage}`;
+      [items, total] = await qb.cache(cacheKey, ttl).getManyAndCount();
+    } else {
+      [items, total] = await qb.getManyAndCount();
+    }
+
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      data: items,
+      meta: {
+        total,
+        page,
+        perPage,
+        totalPages,
+      },
+      links: {
+        first: `?page=1&perPage=${perPage}`,
+        last: `?page=${totalPages}&perPage=${perPage}`,
+        prev: page > 1 ? `?page=${page - 1}&perPage=${perPage}` : '',
+        next: page < totalPages ? `?page=${page + 1}&perPage=${perPage}` : '',
+      },
+    };
+  }
+
+  public async paginateRawQueryBuilder(
+    qb: SelectQueryBuilder<any>,
+    options: FindPaginatedOptions<any>,
+    transform?: (row: any) => any,
+  ): Promise<Pagination<any>> {
+    const {
+      perPage = 10,
+      page = 1,
+      isCached = true,
+      ttl = 3600 * 1000,
+    } = options;
+
+    qb.skip((page - 1) * perPage).take(perPage);
+
+    const cacheKey = isCached
+      ? `raw:${qb.getQueryAndParameters()[0]}:p${page}:pp${perPage}`
+      : undefined;
+
+    const items = isCached
+      ? await qb.cache(cacheKey, ttl).getRawMany()
+      : await qb.getRawMany();
+
+    const countQb = qb.clone().skip(0).take(undefined);
+    const total = await countQb.getCount();
+
+    const totalPages = Math.ceil(total / perPage);
+
+    const data = transform ? items.map(transform) : items;
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        perPage,
+        totalPages,
+      },
+      links: {
+        first: `?page=1&perPage=${perPage}`,
+        last: `?page=${totalPages}&perPage=${perPage}`,
+        prev: page > 1 ? `?page=${page - 1}&perPage=${perPage}` : '',
+        next: page < totalPages ? `?page=${page + 1}&perPage=${perPage}` : '',
+      },
+    };
   }
 
   public override async save<TInput extends DeepPartial<T>>(
