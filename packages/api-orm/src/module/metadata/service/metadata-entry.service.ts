@@ -27,6 +27,10 @@ export class OrmMetadataEntryService extends BaseRepository<MetadataEntry> {
         entity_id,
         entity_type,
       },
+      cache: {
+        id: `metadata:entry:${entity_type}:${entity_id}`,
+        milliseconds: 30000,
+      },
     });
   }
 
@@ -50,7 +54,11 @@ export class OrmMetadataEntryService extends BaseRepository<MetadataEntry> {
       fields,
     });
 
-    return this.metadataEntryRepository.save(created);
+    const result = await this.metadataEntryRepository.save(created);
+
+    // TODO wildcard isn't supported *
+    await this.cacheManager.del('metadata:entry:*');
+    return result;
   }
 
   public async doRemove(
@@ -61,6 +69,8 @@ export class OrmMetadataEntryService extends BaseRepository<MetadataEntry> {
       entity_type,
       entity_id,
     });
+
+    await this.cacheManager.del('metadata:entry:*');
 
     return !!result.affected;
   }

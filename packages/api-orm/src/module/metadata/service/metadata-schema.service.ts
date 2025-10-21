@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { MetadataSchema } from '../entity/metadata-schema.entity';
 import { EntityType, FieldType } from '@repo/shared';
 import { MetadataValidationRule } from '../interface/metadata-validation-rule.interface';
+import { MetadataQueryOptions } from '../interface/metadata-query-options.interface';
 
 @Injectable()
 export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
@@ -19,6 +20,60 @@ export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
     );
   }
 
+  public async findSchemasWithPagination(options: MetadataQueryOptions) {
+    const {
+      entity_type,
+      field_key,
+      field_label,
+      field_type,
+      page = 1,
+      perPage = 20,
+    } = options;
+
+    const queryBuilder = this.metadataSchemaRepository
+      .createQueryBuilder('schema')
+      .where('schema.entity_type = :entity_type', { entity_type })
+      .andWhere('schema.is_active = :is_active', { is_active: true });
+
+    if (field_key) {
+      queryBuilder.andWhere('schema.field_key ILIKE :field_key', {
+        field_key: `%${field_key}%`,
+      });
+    }
+
+    if (field_label) {
+      queryBuilder.andWhere('schema.field_label ILIKE :field_label', {
+        field_label: `%${field_label}%`,
+      });
+    }
+
+    if (field_type) {
+      queryBuilder.andWhere('schema.field_type = :field_type', { field_type });
+    }
+
+    const total = await queryBuilder.getCount();
+
+    const data = await queryBuilder
+      .orderBy('schema.display_order', 'ASC')
+      .skip((page - 1) * perPage)
+      .take(perPage)
+      .getMany();
+
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      status: 200,
+      data,
+      meta: {
+        total,
+        page,
+        perPage,
+        totalPages,
+      },
+      links: this.buildPaginationLinks(page, perPage, totalPages),
+    };
+  }
+
   /**
    * Get all active schemas for an entity type
    */
@@ -27,7 +82,11 @@ export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
       where: { entity_type: entityType, is_active: true },
       order: { display_order: 'ASC' },
       isCached: true,
-      ttl: 300000,
+      ttl: 30000,
+      cache: {
+        id: `metadata:schema:${entityType}:active`,
+        milliseconds: 30000,
+      },
     });
   }
 
@@ -42,7 +101,11 @@ export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
         is_active: true,
       },
       isCached: true,
-      ttl: 300000,
+      ttl: 30000,
+      cache: {
+        id: `metadata_schema_${entityType}_field_${fieldKey}`,
+        milliseconds: 30000,
+      },
     });
   }
 
@@ -232,7 +295,7 @@ export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
       where: { entity_type },
       order: { display_order: 'ASC' },
       cache: {
-        id: `metadata_schema_${entity_type}`,
+        id: `metadata:schema:${entity_type}`,
         milliseconds: 60000,
       },
     });
@@ -247,7 +310,38 @@ export class OrmMetadataSchemaService extends BaseRepository<MetadataSchema> {
         is_active: true,
       },
       order: { display_order: 'ASC' },
-      cache: true,
+      cache: {
+        id: `metadata:schema:${entity_type}`,
+        milliseconds: 30000,
+      },
     });
+  }
+
+  async invalidateCache(): Promise<void> {
+    const entityTypes = [
+      EntityType.Property,
+      EntityType.Listing,
+      EntityType.Client,
+    ];
+
+    for (const type of entityTypes) {
+      const cacheId = `metadata:schema:${type}`;
+      await this.metadataSchemaRepository.manager.connection.queryResultCache?.remove(
+        [cacheId],
+      );
+    }
+  }
+
+  private buildPaginationLinks(
+    page: number,
+    perPage: number,
+    totalPages: number,
+  ): Record<string, string> {
+    return {
+      first: `?page=1&perPage=${perPage}`,
+      last: `?page=${totalPages}&perPage=${perPage}`,
+      prev: page > 1 ? `?page=${page - 1}&perPage=${perPage}` : '',
+      next: page < totalPages ? `?page=${page + 1}&perPage=${perPage}` : '',
+    };
   }
 }
