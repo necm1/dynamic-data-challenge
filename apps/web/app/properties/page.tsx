@@ -2,18 +2,18 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@repo/ui/components/button';
 import { Plus } from 'lucide-react';
-import { PropertiesTable } from '../../components/properties/properties-table';
+import { PropertiesTable } from '../../components/properties/table/table';
 import { getProperties } from '@repo/web-utils/actions/properties';
 import { getMetadataSchemas } from '@repo/web-utils/actions/metadata';
 import { EntityType } from '@repo/shared';
+import { SearchParams } from 'next/dist/server/request/search-params';
+import { PropertyView } from '../../components/properties/property-view';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-async function PropertiesDataWrapper({
+export default async function PropertiesPage({
   searchParams,
 }: {
   searchParams: SearchParams;
@@ -41,32 +41,28 @@ async function PropertiesDataWrapper({
   ]);
 
   return (
-    <PropertiesTable initialData={initialData} schemas={schemasResponse.data} />
-  );
-}
-
-export default async function PropertiesPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  return (
     <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Properties</h1>
           <p className="text-muted-foreground">Manage your property listings</p>
         </div>
-        <Link href="/properties/create">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Property
-          </Button>
-        </Link>
+        <PropertyView
+          schemas={schemasResponse.data}
+          trigger={
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Property
+            </Button>
+          }
+        />
       </div>
 
       <Suspense fallback={<div>Loading properties...</div>}>
-        <PropertiesDataWrapper searchParams={searchParams} />
+        <PropertiesTable
+          initialData={initialData}
+          schemas={schemasResponse.data}
+        />
       </Suspense>
     </div>
   );

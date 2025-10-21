@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, Fragment } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -19,7 +19,6 @@ import {
   TableRow,
 } from '@repo/ui/components/table';
 import { Button } from '@repo/ui/components/button';
-import { Badge } from '@repo/ui/components/badge';
 import {
   Select,
   SelectContent,
@@ -27,13 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui/components/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@repo/ui/components/dropdown-menu';
-import { PropertiesFilterBar } from './properties-filter-bar';
+import { PropertiesFilterBar } from './filter-bar';
 import {
   getProperties,
   deleteProperty,
@@ -44,17 +37,17 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
   MetadataSchema,
   PaginatedResponse,
 } from '@repo/web-utils/actions/metadata';
+import { PropertiesTableCustomFields } from './custom-fields';
+import { PropertiesTableActions } from './actions';
+import { PropertyView } from '../property-view';
 
 type Property = {
   id: string;
@@ -83,6 +76,16 @@ export function PropertiesTable({
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  const schemaMap = useMemo(() => {
+    return schemas.reduce(
+      (acc, schema) => {
+        acc[schema.field_key] = schema;
+        return acc;
+      },
+      {} as Record<string, MetadataSchema>,
+    );
+  }, [schemas]);
 
   // Parse URL params
   const page = Number(searchParams.get('page')) || 1;
@@ -143,13 +146,16 @@ export function PropertiesTable({
     {
       accessorKey: 'title',
       header: () => <div className="text-left">Title</div>,
+      // cell: ({ row }) => (
+      //   <Link
+      //     href={`/properties/${row.original.id}`}
+      //     className="font-medium hover:underline"
+      //   >
+      //     {row.getValue('title')}
+      //   </Link>
+      // ),
       cell: ({ row }) => (
-        <Link
-          href={`/properties/${row.original.id}`}
-          className="font-medium hover:underline"
-        >
-          {row.getValue('title')}
-        </Link>
+        <PropertyView property={row.original} schemas={schemas} />
       ),
     },
     {
@@ -177,64 +183,24 @@ export function PropertiesTable({
     {
       accessorKey: 'custom_fields',
       header: () => <div className="text-left">Custom Fields</div>,
-      cell: ({ row }) => {
-        const fields = row.getValue('custom_fields') as Record<string, any>;
-        const entries = Object.entries(fields || {});
-        if (entries.length === 0)
-          return <span className="text-xs text-muted-foreground">None</span>;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {entries.slice(0, 2).map(([k, v]) => (
-              <Badge key={k} variant="secondary" className="text-xs">
-                {k}: {String(v).slice(0, 10)}
-              </Badge>
-            ))}
-            {entries.length > 2 && (
-              <Badge variant="outline" className="text-xs">
-                +{entries.length - 2}
-              </Badge>
-            )}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <PropertiesTableCustomFields
+          schemas={schemas}
+          customFields={row.getValue('custom_fields')}
+          maxVisible={2}
+        />
+      ),
     },
     {
       id: 'actions',
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/properties/${row.original.id}`}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/properties/${row.original.id}/edit`}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() =>
-                  handleDelete(row.original.id, row.original.title)
-                }
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <PropertiesTableActions
+          property={row.original}
+          handleDelete={handleDelete}
+          deleteMutation={deleteMutation}
+          schemas={schemas}
+        />
       ),
     },
   ];
@@ -257,7 +223,7 @@ export function PropertiesTable({
     <div className="space-y-4">
       <PropertiesFilterBar schemas={schemas} />
 
-      <div className="rounded-md border relative">
+      <div className="overflow-hidden rounded-lg border">
         {isHydrated && isFetching && (
           <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -265,11 +231,11 @@ export function PropertiesTable({
         )}
 
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} colSpan={header.colSpan}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -281,7 +247,7 @@ export function PropertiesTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {isLoading ? (
               <TableRow>
                 <TableCell
