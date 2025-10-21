@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Logger,
   Post,
   Body,
   Param,
@@ -11,23 +10,27 @@ import {
   ParseUUIDPipe,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { OrmMetadataSchemaService } from '@repo/api-orm';
 import { CreateFieldSchemaDto } from '../dto/create-field-schema.dto';
 import { EntityType } from '@repo/shared';
 import { UpdateFieldSchemaDto } from '../dto/update-field-schema.dto';
+import { FindFieldSchemasDto } from '../dto/find-field-schemas.dto';
 
 @Controller('metadata')
 export class MetadataController {
-  private readonly logger: Logger = new Logger(MetadataController.name);
-
   constructor(private metadataSchemaService: OrmMetadataSchemaService) {}
+
+  @Get()
+  public async getSchemas(@Query() query: FindFieldSchemasDto) {
+    return this.metadataSchemaService.findSchemasWithPagination(query);
+  }
 
   @Get('schema/:entityType')
   async getSchema(
     @Param('entityType', new ParseEnumPipe(EntityType)) entityType: EntityType,
   ) {
-    this.logger.log(`Getting metadata schema for entity type: ${entityType}`);
     return this.metadataSchemaService.findActiveByEntityType(entityType);
   }
 
@@ -47,6 +50,7 @@ export class MetadataController {
     }
 
     const schema = this.metadataSchemaService.create(dto);
+    await this.metadataSchemaService.invalidateCache();
     return this.metadataSchemaService.save(schema);
   }
 
@@ -68,7 +72,10 @@ export class MetadataController {
       schema.display_order = dto.display_order;
     if (dto.is_active !== undefined) schema.is_active = dto.is_active;
 
-    return this.metadataSchemaService.save(schema);
+    const result = await this.metadataSchemaService.save(schema);
+
+    await this.metadataSchemaService.invalidateCache();
+    return result;
   }
 
   @Delete('schema/:id')
@@ -81,6 +88,8 @@ export class MetadataController {
 
     schema.is_active = false;
     await this.metadataSchemaService.save(schema);
+
+    await this.metadataSchemaService.invalidateCache();
 
     return {
       success: true,
