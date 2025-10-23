@@ -19,6 +19,9 @@
     "lint": {
       "dependsOn": [
         "^lint"
+      ],
+      "env": [
+        "NEXT_PUBLIC_API_URL"
       ]
     },
     "check-types": {
@@ -32,6 +35,13 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "start": {
+      "dependsOn": [
+        "^lint",
+        "^build"
+      ],
+      "persistent": true
     }
   }
 }
