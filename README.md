@@ -197,3 +197,15 @@ Time:        2.808 s
 │   ├── web-utils/    # Server actions, API client
 │   └── ui/           # Shadcn UI components
 ```
+## Screenshots
+Listings Preview:
+<img width="1972" height="1095" alt="image" src="https://github.com/user-attachments/assets/a3f1798e-021a-42d7-a60e-13e90a09d6c7" />
+
+Table Filter:
+<img width="1659" height="968" alt="image" src="https://github.com/user-attachments/assets/e4ce427d-3b5c-49e6-a98c-e8218667f1bc" />
+
+Field Schema Management (& Validation):
+<img width="1973" height="1096" alt="image" src="https://github.com/user-attachments/assets/8772109a-1aea-4fa6-bee9-dd3ae4449af5" />
+
+
+
