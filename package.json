@@ -1,16 +1,30 @@
 {
   "name": "dynamic-data-challenge",
   "private": true,
+  "license": "CC-BY-NC-4.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "api:start": "turbo run start --filter=api",
+    "api:dev": "turbo run dev --filter=api",
+    "api:build": "turbo run dev --filter=api",
+    "web:start": "turbo run start --filter=web",
+    "web:dev": "turbo run dev --filter=web",
+    "web:build": "turbo run build --filter=web",
+    "typeorm": "TS_NODE_PROJECT=tsconfig.typeorm.json ts-node -r dotenv/config ./node_modules/typeorm/cli",
+    "orm:migrate": "npm run typeorm -- migration:generate ./apps/api/src/migrations/$npm_config_name -d ./packages/api-orm/src/typeorm.config.ts",
+    "orm:create": "npm run typeorm -- migration:create ./apps/api/src/migrations/$npm_config_name -- -d ./packages/api-orm/src/typeorm.config.ts",
+    "orm:run": "npm run typeorm migration:run -- -d ./packages/api-orm/src/typeorm.config.ts",
+    "orm:revert": "npm run typeorm migration:revert -- -d ./packages/api-orm/src/typeorm.config.ts"
   },
   "devDependencies": {
+    "@types/node": "^24.8.1",
     "prettier": "^3.6.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "tsconfig-paths": "^4.2.0",
     "turbo": "^2.5.8"
   },
   "engines": {

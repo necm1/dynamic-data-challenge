@@ -1,0 +1,41 @@
+{
+    "name": "@repo/api-orm",
+    "version": "0.0.0",
+    "type": "commonjs",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc --watch -p tsconfig.build.json",
+        "test": "jest --config ./jest.json"
+    },
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/jest": "^30.0.0",
+        "@types/pg": "^8",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.5",
+        "typescript": "latest"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.1.6",
+        "@nestjs/config": "^4.0.2",
+        "@nestjs/typeorm": "^11.0.0",
+        "@repo/api-utils": "*",
+        "@repo/shared": "*",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.2",
+        "ioredis": "^5.8.1",
+        "pg": "^8.16.3",
+        "typeorm": "^0.3.27"
+    }
+}

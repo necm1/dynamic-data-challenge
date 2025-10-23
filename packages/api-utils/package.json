@@ -1,0 +1,29 @@
+{
+    "name": "@repo/api-utils",
+    "version": "0.0.0",
+    "type": "commonjs",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc --watch -p tsconfig.build.json"
+    },
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/cache-manager": "4.0.1",
+        "typescript": "latest"
+    },
+    "dependencies": {
+        "cache-manager": "5.7.5",
+        "cache-manager-redis-yet": "5.1.3"
+    }
+}
