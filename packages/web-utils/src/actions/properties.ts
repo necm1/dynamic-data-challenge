@@ -7,14 +7,14 @@ export type PropertyFilterParams = {
   title?: string;
   minPrice?: number;
   maxPrice?: number;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
 };
 
 export async function getProperties(params: {
   params: PropertyFilterParams[];
   page: number;
   perPage: number;
-}): Promise<PaginatedResponse<any>> {
+}): Promise<PaginatedResponse<unknown>> {
   const { page, perPage, params: filterParams } = params;
 
   const searchParams = new URLSearchParams();
@@ -49,7 +49,7 @@ export async function getProperties(params: {
   return response.json();
 }
 
-export async function getPropertyById(id: string): Promise<any> {
+export async function getPropertyById(id: string): Promise<unknown> {
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -68,8 +68,8 @@ export async function createProperty(data: {
   address: string;
   price: number;
   year_built: number;
-  fields?: Record<string, any>;
-}): Promise<any> {
+  fields?: Record<string, unknown>;
+}): Promise<unknown> {
   const response = await fetch(`${API_URL}/properties`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -93,9 +93,9 @@ export async function updateProperty(
     address?: string;
     price?: number;
     year_built?: number;
-    fields?: Record<string, any>;
+    fields?: Record<string, unknown>;
   },
-): Promise<any> {
+): Promise<unknown> {
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

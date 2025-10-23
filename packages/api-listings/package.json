@@ -1,5 +1,5 @@
 {
-    "name": "@repo/shared",
+    "name": "@repo/api-listings",
     "version": "0.0.0",
     "type": "commonjs",
     "private": true,
@@ -19,6 +19,16 @@
     },
     "devDependencies": {
         "@repo/typescript-config": "*",
+        "@types/pg": "^8",
         "typescript": "latest"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.1.6",
+        "@nestjs/config": "^4.0.2",
+        "@repo/api-orm": "*",
+        "@repo/api-utils": "*",
+        "@repo/shared": "*",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.2"
     }
 }

@@ -1,6 +1,5 @@
 import { z } from 'zod';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+import { API_URL } from '../constants';
 
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({

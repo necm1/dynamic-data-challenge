@@ -315,10 +315,10 @@ function PDataTable<TData, TValue>({
 }
 
 export function useDataTableSource<T>(
-  fetchMethod: any,
+  fetchMethod: unknown,
   initialPage = 1,
   initialPerPage = 10,
-  ...params: any
+  ...params: unknown
 ) {
   const [page, setPage] = useState(initialPage);
   const [perPage, setPerPage] = useState(initialPerPage);
@@ -356,8 +356,8 @@ export function useDataTableSource<T>(
 type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
   reload: boolean;
-  fetchMethod?: any;
-  fetchParams?: any[];
+  fetchMethod?: unknown;
+  fetchParams?: unknown[];
   initialPage?: number;
   initialPerPage?: number;
 };
@@ -371,7 +371,7 @@ export const DataTable = forwardRef(
       fetchParams,
       initialPage = 1,
       initialPerPage = 10,
-    }: DataTableProps<any, any>,
+    }: DataTableProps<unknown, unknown>,
     ref?: React.Ref<{ refresh: () => void }>,
   ) => {
     const {
@@ -402,7 +402,7 @@ export const DataTable = forwardRef(
 
     return (
       <PDataTable
-        columns={columns as any}
+        columns={columns as unknown}
         data={data}
         page={page}
         setPage={setPage}
@@ -453,7 +453,7 @@ interface DataTableSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * The width of each cell in the table.
    * The length of the array should be equal to the columnCount.
-   * Any valid CSS width value is accepted.
+   * any valid CSS width value is accepted.
    * @default ["auto"]
    * @type string[] | undefined
    */

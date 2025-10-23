@@ -3,6 +3,7 @@
 import { EntityType } from '@repo/shared';
 import { API_URL } from '../constants';
 import { PaginatedResponse } from '../types/paginated-response';
+import { FieldType } from '../lib/schemas/metadata.schema.js';
 
 export type BaseValidationRules = {
   required: boolean;
@@ -36,7 +37,7 @@ export type MetadataSchema = {
   entity_type: number;
   field_key: string;
   field_label: string;
-  field_type: 'STRING' | 'NUMBER' | 'BOOLEAN' | 'DATE' | 'SELECT' | 'TEXT';
+  field_type: FieldType;
   is_active: boolean;
   validation_rules?: ValidationRules;
   display_order: number;
@@ -93,7 +94,7 @@ export async function updateMetadataSchema(
   id: string,
   dto: {
     field_label?: string;
-    validation_rules?: Record<string, any>;
+    validation_rules?: Record<string, unknown>;
     display_order?: number;
     is_active?: boolean;
   },
