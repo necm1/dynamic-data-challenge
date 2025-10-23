@@ -7,6 +7,8 @@ import { resolve } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
+import { ListingSeedService } from './service/listing-seed.service';
+import { ClientSeedService } from './service/client-seed.service';
 
 @Module({
   imports: [
@@ -30,6 +32,11 @@ import { RedisClientOptions } from 'redis';
     OrmModule,
     OrmMetadataModule,
   ],
-  providers: [PropertySeedService, SeedCommand],
+  providers: [
+    PropertySeedService,
+    ListingSeedService,
+    ClientSeedService,
+    SeedCommand,
+  ],
 })
 export class SeedModule {}

@@ -1,6 +1,8 @@
 import { SeedModule } from './seed.module';
 import { NestFactory } from '@nestjs/core';
 import { PropertySeedService } from './service/property-seed.service';
+import { ListingSeedService } from './service/listing-seed.service';
+import { ClientSeedService } from './service/client-seed.service';
 
 (async () => {
   console.log('Starting database seed...\n');
@@ -10,8 +12,14 @@ import { PropertySeedService } from './service/property-seed.service';
       logger: ['error', 'warn', 'log'],
     });
 
-    const seedService = app.get(PropertySeedService);
-    await seedService.seed();
+    const propertySeedService = app.get(PropertySeedService);
+    await propertySeedService.seed();
+
+    const listingSeedService = app.get(ListingSeedService);
+    await listingSeedService.seed();
+
+    const clientSeedService = app.get(ClientSeedService);
+    await clientSeedService.seed();
 
     await app.close();
 

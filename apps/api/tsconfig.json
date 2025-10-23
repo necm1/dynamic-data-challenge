@@ -2,7 +2,6 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "composite": true,
-    // "resolvePackageJsonExports": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

@@ -15,8 +15,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "nest start --entryFile seed/main"
+    "test:e2e": "jest --config ./test/jest-e2e.json --detectOpenHandles",
+    "seed": "nest start --entryFile seed/main",
+    "benchmark": "ts-node -r tsconfig-paths/register src/benchmark.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",
@@ -24,6 +25,8 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@repo/api-client": "*",
+    "@repo/api-listings": "*",
     "@repo/api-metadata": "*",
     "@repo/api-orm": "*",
     "@repo/api-property": "*",
@@ -49,7 +52,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
-    "@types/supertest": "^6.0.2",
+    "@types/supertest": "^6.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -58,7 +61,7 @@
     "nest-commander": "^3.20.1",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
-    "supertest": "^7.0.0",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",

@@ -15,6 +15,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
 import { HttpExceptionFilter, ResponseInterceptor } from '@repo/api-utils';
+import { ListingsModule } from '@repo/api-listings';
+import { ClientModule } from '@repo/api-client';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { HttpExceptionFilter, ResponseInterceptor } from '@repo/api-utils';
     OrmModule,
     MetadataModule,
     PropertyModule,
+    ListingsModule,
+    ClientModule,
   ],
   controllers: [AppController],
   providers: [

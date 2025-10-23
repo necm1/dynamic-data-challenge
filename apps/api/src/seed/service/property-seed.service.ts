@@ -22,7 +22,6 @@ export class PropertySeedService {
     this.logger.log('Starting property seed...');
 
     await this.clearData();
-
     await this.seedFieldSchemas();
     await this.seedProperties();
 
@@ -35,9 +34,7 @@ export class PropertySeedService {
     await this.dataSource.query(
       `DELETE FROM entity_metadata WHERE entity_type = '0'`,
     );
-
     await this.dataSource.query('DELETE FROM properties');
-
     await this.dataSource.query(
       `DELETE FROM metadata_schemas WHERE entity_type = '0'`,
     );
@@ -180,51 +177,48 @@ export class PropertySeedService {
   }
 
   private async seedProperties() {
-    this.logger.log('Creating properties...');
+    this.logger.log('Creating 10,000 properties...');
 
     const propertyData: PropertyWithFields[] = this.generatePropertyData();
+    const batchSize = 100;
 
-    for (const data of propertyData) {
-      const result = await this.dataSource
-        .createQueryBuilder()
-        .insert()
-        .into('properties')
-        .values({
-          title: data.title,
-          address: data.address,
-          price: data.price,
-          year_built: data.year_built,
-        })
-        .returning('id')
-        .execute();
+    for (let i = 0; i < propertyData.length; i += batchSize) {
+      const batch = propertyData.slice(i, i + batchSize);
 
-      const propertyId = result.raw[0].id;
+      for (const data of batch) {
+        const result = await this.dataSource
+          .createQueryBuilder()
+          .insert()
+          .into('properties')
+          .values({
+            title: data.title,
+            address: data.address,
+            price: data.price,
+            year_built: data.year_built,
+          })
+          .returning('id')
+          .execute();
 
-      if (data.customFields && Object.keys(data.customFields).length > 0) {
-        await this.dataSource.query(
-          `INSERT INTO entity_metadata (entity_type, entity_id, fields) 
-           VALUES ('0', $1, $2)`,
-          [propertyId, JSON.stringify(data.customFields)],
-        );
+        const propertyId = result.raw[0].id;
+
+        if (data.customFields && Object.keys(data.customFields).length > 0) {
+          await this.dataSource.query(
+            `INSERT INTO entity_metadata (entity_type, entity_id, fields) 
+             VALUES ('0', $1, $2)`,
+            [propertyId, JSON.stringify(data.customFields)],
+          );
+        }
       }
+
+      this.logger.log(
+        `Progress: ${Math.min(i + batchSize, propertyData.length)}/10,000`,
+      );
     }
 
     this.logger.log(`Created ${propertyData.length} properties with metadata`);
   }
 
-  private generatePropertyData() {
-    const addresses: string[] = [];
-
-    for (let i = 0; i < 50; i++) {
-      addresses.push(faker.location.streetAddress());
-    }
-
-    const cities: string[] = [];
-
-    for (let i = 0; i < 50; i++) {
-      cities.push(faker.location.city());
-    }
-
+  private generatePropertyData(): PropertyWithFields[] {
     const propertyTypes = [
       'Luxury Penthouse',
       'Modern Apartment',
@@ -241,11 +235,13 @@ export class PropertySeedService {
     const properties: PropertyWithFields[] = [];
 
     for (let i = 0; i < 10000; i++) {
+      const propertyType = faker.helpers.arrayElement(propertyTypes);
+
       properties.push({
-        title: `${propertyTypes[i % propertyTypes.length]} #${i + 1}`,
-        address: `${100 + i} ${addresses[i % addresses.length]}, ${cities[i % cities.length]}`,
-        price: 300000 + Math.floor(Math.random() * 2000000),
-        year_built: 1980 + Math.floor(Math.random() * 45),
+        title: `${propertyType} in ${faker.location.city()}`,
+        address: `${faker.location.streetAddress()}, ${faker.location.city()}, ${faker.location.state()}`,
+        price: faker.number.int({ min: 300000, max: 2500000 }),
+        year_built: faker.number.int({ min: 1980, max: 2024 }),
         customFields: this.generateRandomCustomFields(),
       });
     }
@@ -276,49 +272,47 @@ export class PropertySeedService {
 
     const fields: Record<string, any> = {};
 
-    if (Math.random() > 0.2) {
-      fields.energy_rating =
-        energyRatings[Math.floor(Math.random() * energyRatings.length)];
+    if (faker.datatype.boolean({ probability: 0.8 })) {
+      fields.energy_rating = faker.helpers.arrayElement(energyRatings);
     }
 
-    if (Math.random() > 0.3) {
-      fields.square_footage = 500 + Math.floor(Math.random() * 4500);
+    if (faker.datatype.boolean({ probability: 0.7 })) {
+      fields.square_footage = faker.number.int({ min: 500, max: 5000 });
     }
 
-    if (Math.random() > 0.4) {
-      fields.has_parking = Math.random() > 0.5;
+    if (faker.datatype.boolean({ probability: 0.6 })) {
+      fields.has_parking = faker.datatype.boolean();
     }
 
-    if (Math.random() > 0.1) {
-      fields.num_bedrooms = 1 + Math.floor(Math.random() * 6);
+    if (faker.datatype.boolean({ probability: 0.9 })) {
+      fields.num_bedrooms = faker.number.int({ min: 1, max: 6 });
     }
 
-    if (Math.random() > 0.1) {
-      fields.num_bathrooms = 1 + Math.floor(Math.random() * 4);
+    if (faker.datatype.boolean({ probability: 0.9 })) {
+      fields.num_bathrooms = faker.number.int({ min: 1, max: 4 });
     }
 
-    if (Math.random() > 0.5) {
-      fields.year_renovated = 2000 + Math.floor(Math.random() * 25);
+    if (faker.datatype.boolean({ probability: 0.5 })) {
+      fields.year_renovated = faker.number.int({ min: 2000, max: 2024 });
     }
 
-    if (Math.random() > 0.3) {
-      const numAmenities = 1 + Math.floor(Math.random() * 4);
-      fields.amenities = amenitiesPool
-        .sort(() => Math.random() - 0.5)
-        .slice(0, numAmenities);
+    if (faker.datatype.boolean({ probability: 0.7 })) {
+      const numAmenities = faker.number.int({ min: 1, max: 4 });
+      fields.amenities = faker.helpers.arrayElements(
+        amenitiesPool,
+        numAmenities,
+      );
     }
 
-    if (Math.random() > 0.4) {
-      fields.heating_type =
-        heatingTypes[Math.floor(Math.random() * heatingTypes.length)];
+    if (faker.datatype.boolean({ probability: 0.6 })) {
+      fields.heating_type = faker.helpers.arrayElement(heatingTypes);
+    }
+    if (faker.datatype.boolean({ probability: 0.4 })) {
+      fields.internet_speed = faker.number.int({ min: 50, max: 1000 });
     }
 
-    if (Math.random() > 0.6) {
-      fields.internet_speed = 50 + Math.floor(Math.random() * 950);
-    }
-
-    if (Math.random() > 0.5) {
-      fields.pet_friendly = Math.random() > 0.5;
+    if (faker.datatype.boolean({ probability: 0.5 })) {
+      fields.pet_friendly = faker.datatype.boolean();
     }
 
     return fields;
