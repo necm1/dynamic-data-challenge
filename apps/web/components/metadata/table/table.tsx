@@ -296,7 +296,6 @@ export function FieldSchemaTable({
             </Select>
           </div>
 
-          {/* Page navigation */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

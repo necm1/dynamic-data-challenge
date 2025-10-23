@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -8,7 +8,6 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   flexRender,
-  ColumnDef,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -26,12 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui/components/select';
-import { PropertiesFilterBar } from './filter-bar';
-import {
-  getProperties,
-  deleteProperty,
-  type PropertyFilterParams,
-} from '@repo/web-utils/actions/properties';
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,67 +32,46 @@ import {
   ChevronsRight,
   Loader2,
 } from 'lucide-react';
+import {
+  getListings,
+  deleteListing,
+  type Listing,
+  type PaginatedListings,
+  type FindListingsParams,
+} from '@repo/web-utils/actions/listings';
+import { ListingView } from '../view';
+import { createListingColumns } from './columns';
 import { MetadataSchema } from '@repo/web-utils/actions/metadata';
-import { PaginatedResponse } from '@repo/web-utils/types/paginated-response';
-import { PropertyView } from '../view';
-import { createPropertyColumns } from './columns';
 
-type Property = {
-  id: string;
-  title: string;
-  address: string;
-  price: number;
-  year_built: number;
-  custom_fields: Record<string, any>;
-};
-
-type PropertiesTableProps = {
-  initialData: PaginatedResponse<Property>;
+type ListingTableProps = {
+  initialData: PaginatedListings;
   schemas: MetadataSchema[];
 };
 
-export function PropertiesTable({
-  initialData,
-  schemas,
-}: PropertiesTableProps) {
+export function ListingTable({ initialData, schemas }: ListingTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-
-  const [isHydrated, setIsHydrated] = useState(false);
   const [viewOpen, setViewOpen] = useState<boolean>(false);
-  const [viewProperty, setViewProperty] = useState<Property | undefined>(
+  const [viewListing, setViewListing] = useState<Listing | undefined>(
     undefined,
   );
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  const schemaMap = useMemo(() => {
-    return schemas.reduce(
-      (acc, schema) => {
-        acc[schema.field_key] = schema;
-        return acc;
-      },
-      {} as Record<string, MetadataSchema>,
-    );
-  }, [schemas]);
-
-  // Parse URL params
   const page = Number(searchParams.get('page')) || 1;
   const perPage = Number(searchParams.get('perPage')) || 20;
 
-  const filterParams = useMemo<PropertyFilterParams>(() => {
-    const params: PropertyFilterParams = {};
-    const title = searchParams.get('title');
+  const filterParams = useMemo<FindListingsParams>(() => {
+    const params: FindListingsParams = {};
+    const status = searchParams.get('status');
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
+    const property_id = searchParams.get('property_id');
     const customFields = searchParams.get('customFields');
 
-    if (title) params.title = title;
+    if (status) params.status = Number(status);
     if (minPrice) params.minPrice = Number(minPrice);
     if (maxPrice) params.maxPrice = Number(maxPrice);
+    if (property_id) params.property_id = property_id;
     if (customFields) {
       try {
         params.customFields = JSON.parse(customFields);
@@ -111,8 +83,8 @@ export function PropertiesTable({
   }, [searchParams]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['properties', page, perPage, filterParams],
-    queryFn: () => getProperties({ params: [filterParams], page, perPage }),
+    queryKey: ['listings', page, perPage, filterParams],
+    queryFn: () => getListings({ page, perPage, ...filterParams }),
     initialData,
     placeholderData: (prev) => prev,
     staleTime: 0,
@@ -121,14 +93,14 @@ export function PropertiesTable({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteProperty,
+    mutationFn: deleteListing,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
   });
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete listing "${title}"? This cannot be undone.`)) return;
     await deleteMutation.mutateAsync(id);
   };
 
@@ -138,55 +110,55 @@ export function PropertiesTable({
       if (value) params.set(key, value);
       else params.delete(key);
     });
-    router.push(`/properties?${params.toString()}`);
+    router.push(`/listings?${params.toString()}`);
   };
 
-  const columns: ColumnDef<Property>[] = createPropertyColumns({
+  const handleListingView = (
+    listing: Listing,
+    mode: 'view' | 'edit' = 'view',
+  ) => {
+    setViewListing(listing);
+    setViewOpen(true);
+  };
+
+  const columns = createListingColumns({
     schemas,
-    onViewDetails: (property, mode) => {
-      setViewProperty(property);
-      setViewOpen(true);
-    },
+    onViewDetails: (listing, mode) => handleListingView(listing, mode),
+    onEditMetadata: (listing) => handleListingView(listing, 'edit'),
     onDelete: handleDelete,
   });
 
   const table = useReactTable({
-    data: data?.data || [],
+    data: data?.data ?? [],
     columns,
-    pageCount: data?.meta?.totalPages || 0,
-    state: {
-      pagination: { pageIndex: page - 1, pageSize: perPage },
-    },
-    manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: data?.meta.totalPages ?? 0,
+    state: {
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: perPage,
+      },
+    },
   });
-
-  const meta = data?.meta || { total: 0, page: 1, perPage: 20, totalPages: 1 };
 
   return (
     <div className="space-y-4">
-      <PropertyView
-        open={viewOpen}
+      <ListingView
+        listing={viewListing}
         schemas={schemas}
-        property={viewProperty}
+        open={viewOpen}
         setOpen={setViewOpen}
       />
-      <PropertiesFilterBar schemas={schemas} />
 
-      <div className="overflow-hidden rounded-lg border">
-        {isHydrated && isFetching && (
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        )}
-
+      <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader className="bg-muted sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
+                  <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -198,26 +170,17 @@ export function PropertiesTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="**:data-[slot=table-cell]:first:w-8">
-            {isLoading ? (
+          <TableBody>
+            {isLoading || isFetching ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No properties found
-                </TableCell>
-              </TableRow>
-            ) : (
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
@@ -230,34 +193,50 @@ export function PropertiesTable({
                   ))}
                 </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No listings found
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Pagination Controls */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * perPage + 1} to{' '}
-            {Math.min(page * perPage, meta.total)} of {meta.total}
-          </p>
+        <div className="text-sm text-muted-foreground">
+          Showing{' '}
+          {data?.meta ? (
+            <>
+              {(data.meta.page - 1) * data.meta.perPage + 1} to{' '}
+              {Math.min(data.meta.page * data.meta.perPage, data.meta.total)} of{' '}
+              {data.meta.total}
+            </>
+          ) : (
+            '...'
+          )}
         </div>
 
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <span className="text-sm">Rows per page</span>
             <Select
-              value={perPage.toString()}
+              value={String(perPage)}
               onValueChange={(value) =>
                 updateUrl({ perPage: value, page: '1' })
               }
             >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={perPage} />
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
+              <SelectContent>
+                {[10, 20, 50, 100].map((size) => (
+                  <SelectItem key={size} value={String(size)}>
                     {size}
                   </SelectItem>
                 ))}
@@ -265,39 +244,43 @@ export function PropertiesTable({
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
               onClick={() => updateUrl({ page: '1' })}
-              disabled={page === 1 || (isHydrated && isFetching)}
+              disabled={page === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => updateUrl({ page: (page - 1).toString() })}
-              disabled={page === 1 || (isHydrated && isFetching)}
+              onClick={() => updateUrl({ page: String(page - 1) })}
+              disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm font-medium">
-              Page {page} of {meta.totalPages}
+            <div className="flex items-center gap-1 px-2">
+              <span className="text-sm">
+                Page {page} of {data?.meta.totalPages ?? 1}
+              </span>
             </div>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => updateUrl({ page: (page + 1).toString() })}
-              disabled={page >= meta.totalPages || (isHydrated && isFetching)}
+              onClick={() => updateUrl({ page: String(page + 1) })}
+              disabled={page >= (data?.meta.totalPages ?? 1)}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => updateUrl({ page: meta.totalPages.toString() })}
-              disabled={page >= meta.totalPages || (isHydrated && isFetching)}
+              onClick={() =>
+                updateUrl({ page: String(data?.meta.totalPages ?? 1) })
+              }
+              disabled={page >= (data?.meta.totalPages ?? 1)}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>

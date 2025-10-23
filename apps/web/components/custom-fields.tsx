@@ -5,17 +5,17 @@ import { JSX, useMemo } from 'react';
 import { Badge } from '@repo/ui/components/badge';
 import { Check, X } from 'lucide-react';
 
-type PropertiesTableCustomFieldsProps = {
+type TableCustomFieldsProps = {
   schemas: MetadataSchema[];
   customFields: Record<string, any>;
   maxVisible?: number;
 };
 
-export function PropertiesTableCustomFields({
+export function TableCustomFieldsProps({
   schemas,
   customFields,
   maxVisible = 2,
-}: PropertiesTableCustomFieldsProps) {
+}: TableCustomFieldsProps) {
   const schemaMap = useMemo(() => {
     return schemas.reduce(
       (acc, schema) => {
@@ -65,6 +65,7 @@ export function PropertiesTableCustomFields({
         };
 
       case 'SELECT':
+      case 'ARRAY':
         if (Array.isArray(value)) {
           return {
             label,

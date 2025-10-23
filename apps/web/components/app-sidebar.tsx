@@ -3,14 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  Building2,
-  Database,
-  Settings,
-  ChevronUp,
-  User2,
-} from 'lucide-react';
+import { Home, Building2, Database, ChevronUp, User2 } from 'lucide-react';
 
 import {
   Sidebar,
@@ -36,11 +29,14 @@ const navigation = {
   main: [
     { title: 'Dashboard', url: '/', icon: Home },
     { title: 'Properties', url: '/properties', icon: Building2 },
+    { title: 'Clients', url: '/clients', icon: User2 },
+    {
+      title: 'Listings',
+      url: '/listings',
+      icon: Database,
+    },
   ],
-  admin: [
-    { title: 'Field Schemas', url: '/admin/schemas', icon: Database },
-    { title: 'Settings', url: '/settings', icon: Settings },
-  ],
+  admin: [{ title: 'Field Schemas', url: '/metadata', icon: Database }],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

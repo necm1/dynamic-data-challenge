@@ -2,14 +2,21 @@ import { Suspense } from 'react';
 import { getMetadataSchemasPaginated } from '@repo/web-utils/actions/metadata';
 import { EntityType } from '@repo/shared';
 import { MetadataView } from '../../components/metadata/view';
+import { Metadata } from 'next';
+import { SearchParams } from 'next/dist/server/request/search-params';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+export const metadata: Metadata = {
+  title: 'Field Schema Management',
+  description: 'Define custom fields for Properties, Listings, and Clients',
+};
+
 export default async function MetadataPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;

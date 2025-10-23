@@ -19,9 +19,9 @@ import {
 } from '@repo/web-utils/actions/metadata';
 import { Property } from '@repo/web-utils/lib/schemas/property.schema';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import {
@@ -50,6 +50,7 @@ import { Checkbox } from '@repo/ui/components/checkbox';
 import { Loader2, Save } from 'lucide-react';
 import { ScrollArea } from '@repo/ui/components/scroll-area';
 import { cn } from '@repo/ui/lib/utils';
+import { buildFormSchema } from '../../utils/build-form-schema';
 
 type PropertyViewProps = {
   property?: Property;
@@ -75,68 +76,29 @@ export function PropertyView({
   const isMobile = useIsMobile();
   const [isPending, startTransition] = useTransition();
 
-  const buildFormSchema = () => {
-    const customFieldsSchema: Record<string, z.ZodTypeAny> = {};
-
-    schemas.forEach((schema) => {
-      let fieldSchema: z.ZodTypeAny;
-
-      switch (schema.field_type) {
-        case 'NUMBER':
-          fieldSchema = z.coerce.number();
-          break;
-        case 'BOOLEAN':
-          fieldSchema = z.boolean();
-          break;
-        case 'DATE':
-          fieldSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-          break;
-        case 'SELECT':
-          const select = schema.validation_rules as
-            | SelectValidationRules
-            | undefined;
-          const options = select?.options;
-          const isMultiple = select?.multiple === true;
-
-          if (isMultiple) {
-            fieldSchema = z.array(z.enum(options as [string, ...string[]]));
-          } else {
-            fieldSchema = z.enum(options as [string, ...string[]]);
-          }
-          break;
-          break;
-        case 'TEXT':
-        case 'STRING':
-        default:
-          fieldSchema = z.string();
-          break;
-      }
-
-      if (!schema.validation_rules?.required) {
-        fieldSchema = fieldSchema.optional();
-      }
-
-      customFieldsSchema[schema.field_key] = fieldSchema;
-    });
-
-    return baseCoreSchema.extend({
-      fields: z.object(customFieldsSchema).optional(),
-    });
-  };
-
-  const formSchema = buildFormSchema();
+  const formSchema = buildFormSchema(schemas, baseCoreSchema);
   type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      title: '',
+      address: '',
+      price: 0,
+      year_built: new Date().getFullYear(),
+      fields: {},
+    },
+  });
+
+  useEffect(() => {
+    form.reset({
       title: property?.title || '',
       address: property?.address || '',
       price: property?.price || 0,
       year_built: property?.year_built || new Date().getFullYear(),
       fields: property?.custom_fields || {},
-    },
-  });
+    });
+  }, [property, form]);
 
   const onSubmit = async (data: FormValues) => {
     startTransition(async () => {
@@ -251,7 +213,7 @@ export function PropertyView({
                   </FormLabel>
                   <div className="space-y-2 border rounded-md p-4">
                     {options?.map((option) => {
-                      const currentValue = (field.value as string[]) || [];
+                      const currentValue: string[] = field.value || [];
                       const isChecked = currentValue.includes(option);
 
                       return (

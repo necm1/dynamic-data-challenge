@@ -19,18 +19,15 @@ export function MetadataFilterBar() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Get current filter values
   const fieldKey = searchParams.get('field_key') || '';
   const fieldLabel = searchParams.get('field_label') || '';
   const fieldType = searchParams.get('field_type') || '';
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(
     () => fieldKey || fieldLabel || fieldType,
     [fieldKey, fieldLabel, fieldType],
   );
 
-  // Update URL with new params (reset to page 1)
   const updateParams = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -42,7 +39,6 @@ export function MetadataFilterBar() {
       }
     });
 
-    // Reset to page 1 when filters change
     if (Object.keys(updates).some((k) => k !== 'page')) {
       params.set('page', '1');
     }
@@ -52,10 +48,8 @@ export function MetadataFilterBar() {
     });
   };
 
-  // Debounced search for text inputs (300ms delay)
   const debouncedUpdate = useDebouncedCallback(updateParams, 300);
 
-  // Clear all filters
   const clearFilters = () => {
     startTransition(() => {
       router.push(window.location.pathname);
@@ -80,7 +74,6 @@ export function MetadataFilterBar() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Field Key Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -92,7 +85,6 @@ export function MetadataFilterBar() {
           />
         </div>
 
-        {/* Field Label Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -104,7 +96,6 @@ export function MetadataFilterBar() {
           />
         </div>
 
-        {/* Field Type Select */}
         <Select
           value={fieldType || 'all'}
           onValueChange={(value) => updateParams({ field_type: value })}
@@ -125,7 +116,6 @@ export function MetadataFilterBar() {
         </Select>
       </div>
 
-      {/* Active Filter Pills */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2">
           {fieldKey && (

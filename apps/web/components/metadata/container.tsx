@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { EntityType } from '@repo/shared';
 import { Button } from '@repo/ui/components/button';
 import { Plus } from 'lucide-react';
@@ -10,7 +10,6 @@ import { FieldSchemaTable } from './table/table';
 import { FieldSchemaDrawer } from './drawer';
 import { MetadataFilterBar } from './table/filter-bar';
 import {
-  getMetadataSchemas,
   getMetadataSchemasPaginated,
   type MetadataSchema,
 } from '@repo/web-utils/actions/metadata';
@@ -31,7 +30,6 @@ export function MetadataContainer({
     null,
   );
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 

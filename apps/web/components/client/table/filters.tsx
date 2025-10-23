@@ -26,18 +26,17 @@ import type {
   SelectValidationRules,
 } from '@repo/web-utils/actions/metadata';
 
-type PropertiesFilterBarProps = {
+type ClientFiltersProps = {
   schemas: MetadataSchema[];
 };
 
-export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
+export function ClientFilters({ schemas }: ClientFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const [title, setTitle] = useState(searchParams.get('title') || '');
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [name, setName] = useState(searchParams.get('name') || '');
+  const [email, setEmail] = useState(searchParams.get('email') || '');
 
   const [customFields, setCustomFields] = useState<Record<string, any>>(() => {
     const cf = searchParams.get('customFields');
@@ -47,20 +46,16 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const activeFiltersCount =
-    [title, minPrice, maxPrice].filter(Boolean).length +
-    Object.keys(customFields).length;
+    [name, email].filter(Boolean).length + Object.keys(customFields).length;
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (title) params.set('title', title);
-    else params.delete('title');
+    if (name.trim()) params.set('name', name.trim());
+    else params.delete('name');
 
-    if (minPrice) params.set('minPrice', minPrice);
-    else params.delete('minPrice');
-
-    if (maxPrice) params.set('maxPrice', maxPrice);
-    else params.delete('maxPrice');
+    if (email.trim()) params.set('email', email.trim());
+    else params.delete('email');
 
     if (Object.keys(customFields).length > 0) {
       params.set('customFields', JSON.stringify(customFields));
@@ -71,15 +66,14 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     params.set('page', '1');
 
     startTransition(() => {
-      router.push(`/properties?${params.toString()}`);
+      router.push(`/clients?${params.toString()}`);
       setIsOpen(false);
     });
-  }, [title, minPrice, maxPrice, customFields, searchParams, router]);
+  }, [name, email, customFields, searchParams, router]);
 
   const clearFilters = useCallback(() => {
-    setTitle('');
-    setMinPrice('');
-    setMaxPrice('');
+    setName('');
+    setEmail('');
     setCustomFields({});
 
     const params = new URLSearchParams();
@@ -87,14 +81,13 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     params.set('perPage', searchParams.get('perPage') || '20');
 
     startTransition(() => {
-      router.push(`/properties?${params.toString()}`);
+      router.push(`/clients?${params.toString()}`);
     });
   }, [router, searchParams]);
 
   const removeFilter = (key: string) => {
-    if (key === 'title') setTitle('');
-    else if (key === 'minPrice') setMinPrice('');
-    else if (key === 'maxPrice') setMaxPrice('');
+    if (key === 'name') setName('');
+    else if (key === 'email') setEmail('');
     else {
       setCustomFields((prev) => {
         const { [key]: _, ...rest } = prev;
@@ -220,9 +213,8 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
   };
 
   const getFilterDisplayValue = (key: string, value: any): string => {
-    if (key === 'title') return value;
-    if (key === 'minPrice') return `$${Number(value).toLocaleString()}`;
-    if (key === 'maxPrice') return `$${Number(value).toLocaleString()}`;
+    if (key === 'name') return value;
+    if (key === 'email') return value;
 
     const schema = schemas.find((s) => s.field_key === key);
     if (!schema) return String(value);
@@ -236,9 +228,9 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     <div className="space-y-3">
       <div className="flex gap-2">
         <Input
-          placeholder="Search properties..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Search by name..."
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
           className="max-w-sm"
         />
@@ -258,7 +250,7 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
           <PopoverContent className="w-96" align="start">
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
               <div className="space-y-2">
-                <h4 className="font-medium text-sm">Filter Properties</h4>
+                <h4 className="font-medium text-sm">Filter Clients</h4>
                 <p className="text-xs text-muted-foreground">
                   Refine your search with core and custom filters
                 </p>
@@ -267,36 +259,21 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
               <Separator />
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Price Range</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="text-sm font-medium">Core Filters</Label>
+                <div className="space-y-2">
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="min"
+                      htmlFor="email-filter"
                       className="text-xs text-muted-foreground"
                     >
-                      Min ($)
+                      Email
                     </Label>
                     <Input
-                      id="min"
-                      type="number"
-                      placeholder="0"
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="max"
-                      className="text-xs text-muted-foreground"
-                    >
-                      Max ($)
-                    </Label>
-                    <Input
-                      id="max"
-                      type="number"
-                      placeholder="∞"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
+                      id="email-filter"
+                      type="email"
+                      placeholder="client@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
@@ -358,40 +335,27 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-muted-foreground">Active:</span>
-          {title && (
+          {name && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              Title: {title}
+              Name: {name}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('title')}
+                onClick={() => removeFilter('name')}
               >
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
           )}
-          {minPrice && (
+          {email && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              Min: {getFilterDisplayValue('minPrice', minPrice)}
+              Email: {email}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('minPrice')}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          {maxPrice && (
-            <Badge variant="secondary" className="gap-1 pr-1">
-              Max: {getFilterDisplayValue('maxPrice', maxPrice)}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('maxPrice')}
+                onClick={() => removeFilter('email')}
               >
                 <X className="h-3 w-3" />
               </Button>

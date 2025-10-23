@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getPropertyById } from '@repo/web-utils/actions/properties';
 import { getMetadataSchemas } from '@repo/web-utils/actions/metadata';
 import { EntityType } from '@repo/shared';
-import { PropertyForm } from '../../../../components/properties/property-form';
+import { PropertyForm } from '../../../../components/properties/form';
 
 export const dynamic = 'force-dynamic';
 

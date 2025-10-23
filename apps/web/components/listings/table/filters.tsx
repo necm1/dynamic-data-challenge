@@ -25,19 +25,29 @@ import type {
   MetadataSchema,
   SelectValidationRules,
 } from '@repo/web-utils/actions/metadata';
+import { ListingStatus } from '@repo/shared';
 
-type PropertiesFilterBarProps = {
+type ListingFiltersProps = {
   schemas: MetadataSchema[];
 };
 
-export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
+const statusLabels = {
+  [ListingStatus.ACTIVE]: 'Active',
+  [ListingStatus.PENDING]: 'Pending',
+  [ListingStatus.SOLD]: 'Sold',
+};
+
+export function ListingFilters({ schemas }: ListingFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const [title, setTitle] = useState(searchParams.get('title') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || '__all__');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [propertyId, setPropertyId] = useState(
+    searchParams.get('property_id') || '',
+  );
 
   const [customFields, setCustomFields] = useState<Record<string, any>>(() => {
     const cf = searchParams.get('customFields');
@@ -47,20 +57,24 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const activeFiltersCount =
-    [title, minPrice, maxPrice].filter(Boolean).length +
-    Object.keys(customFields).length;
+    [status !== '__all__' ? status : '', minPrice, maxPrice, propertyId].filter(
+      Boolean,
+    ).length + Object.keys(customFields).length;
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (title) params.set('title', title);
-    else params.delete('title');
+    if (status && status !== '__all__') params.set('status', status);
+    else params.delete('status');
 
-    if (minPrice) params.set('minPrice', minPrice);
+    if (minPrice.trim()) params.set('minPrice', minPrice.trim());
     else params.delete('minPrice');
 
-    if (maxPrice) params.set('maxPrice', maxPrice);
+    if (maxPrice.trim()) params.set('maxPrice', maxPrice.trim());
     else params.delete('maxPrice');
+
+    if (propertyId.trim()) params.set('property_id', propertyId.trim());
+    else params.delete('property_id');
 
     if (Object.keys(customFields).length > 0) {
       params.set('customFields', JSON.stringify(customFields));
@@ -71,15 +85,24 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     params.set('page', '1');
 
     startTransition(() => {
-      router.push(`/properties?${params.toString()}`);
+      router.push(`/listings?${params.toString()}`);
       setIsOpen(false);
     });
-  }, [title, minPrice, maxPrice, customFields, searchParams, router]);
+  }, [
+    status,
+    minPrice,
+    maxPrice,
+    propertyId,
+    customFields,
+    searchParams,
+    router,
+  ]);
 
   const clearFilters = useCallback(() => {
-    setTitle('');
+    setStatus('__all__');
     setMinPrice('');
     setMaxPrice('');
+    setPropertyId('');
     setCustomFields({});
 
     const params = new URLSearchParams();
@@ -87,14 +110,15 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     params.set('perPage', searchParams.get('perPage') || '20');
 
     startTransition(() => {
-      router.push(`/properties?${params.toString()}`);
+      router.push(`/listings?${params.toString()}`);
     });
   }, [router, searchParams]);
 
   const removeFilter = (key: string) => {
-    if (key === 'title') setTitle('');
+    if (key === 'status') setStatus('__all__');
     else if (key === 'minPrice') setMinPrice('');
     else if (key === 'maxPrice') setMaxPrice('');
+    else if (key === 'property_id') setPropertyId('');
     else {
       setCustomFields((prev) => {
         const { [key]: _, ...rest } = prev;
@@ -220,9 +244,10 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
   };
 
   const getFilterDisplayValue = (key: string, value: any): string => {
-    if (key === 'title') return value;
-    if (key === 'minPrice') return `$${Number(value).toLocaleString()}`;
-    if (key === 'maxPrice') return `$${Number(value).toLocaleString()}`;
+    if (key === 'status') return statusLabels[value as ListingStatus];
+    if (key === 'minPrice' || key === 'maxPrice')
+      return `$${Number(value).toLocaleString()}`;
+    if (key === 'property_id') return value.slice(0, 8);
 
     const schema = schemas.find((s) => s.field_key === key);
     if (!schema) return String(value);
@@ -232,16 +257,40 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
     return String(value);
   };
 
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value && value !== '__all__') {
+      params.set('status', value);
+    } else {
+      params.delete('status');
+    }
+
+    params.set('page', '1');
+
+    startTransition(() => {
+      router.push(`/listings?${params.toString()}`);
+    });
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Input
-          placeholder="Search properties..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-          className="max-w-sm"
-        />
+        <Select value={status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All Statuses</SelectItem>
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
@@ -258,7 +307,7 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
           <PopoverContent className="w-96" align="start">
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
               <div className="space-y-2">
-                <h4 className="font-medium text-sm">Filter Properties</h4>
+                <h4 className="font-medium text-sm">Filter Listings</h4>
                 <p className="text-xs text-muted-foreground">
                   Refine your search with core and custom filters
                 </p>
@@ -267,36 +316,51 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
               <Separator />
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Price Range</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="text-sm font-medium">Core Filters</Label>
+                <div className="space-y-2">
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="min"
+                      htmlFor="min-price-filter"
                       className="text-xs text-muted-foreground"
                     >
-                      Min ($)
+                      Min Price
                     </Label>
                     <Input
-                      id="min"
+                      id="min-price-filter"
                       type="number"
-                      placeholder="0"
+                      placeholder="100000"
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label
-                      htmlFor="max"
+                      htmlFor="max-price-filter"
                       className="text-xs text-muted-foreground"
                     >
-                      Max ($)
+                      Max Price
                     </Label>
                     <Input
-                      id="max"
+                      id="max-price-filter"
                       type="number"
-                      placeholder="∞"
+                      placeholder="500000"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="property-id-filter"
+                      className="text-xs text-muted-foreground"
+                    >
+                      Property ID
+                    </Label>
+                    <Input
+                      id="property-id-filter"
+                      type="text"
+                      placeholder="UUID or partial ID"
+                      value={propertyId}
+                      onChange={(e) => setPropertyId(e.target.value)}
                     />
                   </div>
                 </div>
@@ -358,14 +422,14 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-muted-foreground">Active:</span>
-          {title && (
+          {status !== '__all__' && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              Title: {title}
+              Status: {statusLabels[status as unknown as ListingStatus]}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('title')}
+                onClick={() => removeFilter('status')}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -373,7 +437,7 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
           )}
           {minPrice && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              Min: {getFilterDisplayValue('minPrice', minPrice)}
+              Min: ${Number(minPrice).toLocaleString()}
               <Button
                 variant="ghost"
                 size="sm"
@@ -386,12 +450,25 @@ export function PropertiesFilterBar({ schemas }: PropertiesFilterBarProps) {
           )}
           {maxPrice && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              Max: {getFilterDisplayValue('maxPrice', maxPrice)}
+              Max: ${Number(maxPrice).toLocaleString()}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-auto p-0.5 hover:bg-transparent"
                 onClick={() => removeFilter('maxPrice')}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
+          {propertyId && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              Property: {propertyId.slice(0, 8)}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0.5 hover:bg-transparent"
+                onClick={() => removeFilter('property_id')}
               >
                 <X className="h-3 w-3" />
               </Button>
